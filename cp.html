@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECE/CSE Design Portfolio - Fall 2025</title>
+    <!-- Load Tailwind CSS for Black & Gold Theme -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    // Customizing colors to closely match UI Black and Gold/Yellow
+                    colors: {
+                        'ui-black': '#000000',
+                        'ui-gold': '#ffcd00',
+                        'ui-dark-gold': '#cc9900',
+                        'ui-gray': '#1f1f1f',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Ensuring Inter font is available */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        /* Custom scrollbar for better aesthetics */
+        body::-webkit-scrollbar {
+            width: 8px;
+        }
+        body::-webkit-scrollbar-thumb {
+            background-color: #ffcd00;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-ui-black text-white min-h-screen font-sans antialiased">
+
+    <!-- Global Navigation Bar -->
+    <nav class="bg-ui-gray shadow-lg sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <a href="#" onclick="navigate('home')" class="text-ui-gold text-2xl font-bold tracking-tight hover:text-white transition duration-200">
+                        Design 4880
+                    </a>
+                </div>
+                <div class="flex">
+                    <a href="#" onclick="navigate('home')" class="px-3 py-2 rounded-md text-sm font-medium text-white hover:bg-ui-dark-gold hover:text-ui-black transition duration-200">Home</a>
+                    <a href="#" onclick="showPasswordModal()" class="ml-4 px-3 py-2 rounded-md text-sm font-medium text-ui-gold border border-ui-gold hover:bg-ui-gold hover:text-ui-black transition duration-200">Protected Content</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main id="app" class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <!-- Content will be rendered here by JavaScript -->
+        <div class="text-center py-20">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-ui-gold mx-auto"></div>
+            <p class="mt-4 text-ui-gold">Loading Application...</p>
+        </div>
+    </main>
+
+    <!-- Password Modal -->
+    <div id="password-modal" class="fixed inset-0 bg-black bg-opacity-75 z-50 hidden items-center justify-center">
+        <div class="bg-ui-gray p-8 rounded-lg shadow-2xl w-full max-w-sm transform transition-all duration-300 scale-95 opacity-0" id="modal-content">
+            <h3 class="text-xl font-semibold mb-4 text-ui-gold">Access Protected Content</h3>
+            <p class="text-white mb-4">Please enter the password to view the team's messages.</p>
+            <input type="password" id="password-input" class="w-full p-3 rounded-md bg-ui-black text-white border border-gray-700 focus:ring-ui-gold focus:border-ui-gold mb-4" placeholder="Password">
+            <p id="password-error" class="text-red-500 text-sm mb-4 hidden">Incorrect password. Please try again.</p>
+            <div class="flex justify-end space-x-3">
+                <button onclick="hidePasswordModal()" class="px-4 py-2 text-white border border-gray-600 rounded-md hover:bg-gray-700 transition duration-200">Cancel</button>
+                <button onclick="handlePasswordSubmit()" class="px-4 py-2 bg-ui-gold text-ui-black font-medium rounded-md hover:bg-ui-dark-gold transition duration-200">Log In</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Success/Error Modal -->
+    <div id="message-modal" class="fixed inset-0 bg-black bg-opacity-75 z-50 hidden items-center justify-center">
+        <div class="bg-ui-gray p-6 rounded-lg shadow-2xl w-full max-w-xs transform transition-all duration-300" id="message-modal-content">
+            <h3 id="message-modal-title" class="text-xl font-semibold mb-3 text-ui-gold"></h3>
+            <p id="message-modal-text" class="text-white mb-4"></p>
+            <div class="flex justify-end">
+                <button onclick="document.getElementById('message-modal').classList.add('hidden')" class="px-4 py-2 bg-ui-gold text-ui-black font-medium rounded-md hover:bg-ui-dark-gold">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Firebase Modules and Core Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, addDoc, onSnapshot, collection, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // IMPORTANT: Global variables are required by the canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        setLogLevel('debug'); // Enable Firestore logging
+
+        // --- Global State Definition ---
+        window.appState = {
+            db: null, // Will be initialized later
+            auth: null, // Will be initialized later
+            appId: appId,
+            userId: null,
+            isAuthReady: false,
+            currentPage: 'home',
+            messages: [],
+            members: [
+                { id: 'scott', name: 'Scott Pearson', role: 'Project Lead', image: 'https://placehold.co/150x150/ffcd00/000000?text=SP', bio: 'Expert in embedded systems and loves clean code architecture.' },
+                { id: 'kent', name: 'Kent Zdan', role: 'Security & Backend', image: 'https://placehold.co/150x150/ffcd00/000000?text=KZ', bio: 'Focuses on network security protocols and data integrity.' },
+                { id: 'xavier', name: 'Xavier Uhrmacher', role: 'UI/UX Designer', image: 'https://placehold.co/150x150/ffcd00/000000?text=XU', bio: 'Passionate about creating intuitive user interfaces for all platforms.' },
+                { id: 'braden', name: 'Braden Miller', role: 'Hardware Integration', image: 'https://placehold.co/150x150/ffcd00/000000?text=BM', bio: 'Handles physical prototyping and sensor interfacing.' }
+            ],
+            // Hardcoded required password
+            PROTECTED_PASSWORD: 'Fall2025Lab3',
+        };
+
+        // --- UI Rendering Functions (Defined first for use by navigate/auth handlers) ---
+        function setAppContent(html) {
+            document.getElementById('app').innerHTML = html;
+        }
+
+        function renderMemberPage(memberId) {
+            const member = window.appState.members.find(m => m.id === memberId);
+            if (!member) {
+                window.navigate('home');
+                return;
+            }
+
+            const html = `
+                <div class="space-y-12">
+                    <div class="bg-ui-gray p-8 rounded-lg shadow-xl flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
+                        <img src="${member.image}" alt="${member.name} Photo" class="w-40 h-40 rounded-full object-cover border-4 border-ui-gold shadow-lg" onerror="this.onerror=null; this.src='https://placehold.co/150x150/ffcd00/000000?text=${member.name.split(' ').map(n=>n[0]).join('')}'">
+                        <div>
+                            <h1 class="text-4xl font-extrabold text-ui-gold">${member.name}</h1>
+                            <p class="text-xl text-gray-300 mt-1 mb-4">${member.role}</p>
+                            <p class="text-gray-200 leading-relaxed">${member.bio}</p>
+                            <div class="mt-4">
+                                <span class="inline-block bg-ui-black text-ui-gold text-xs font-semibold px-3 py-1 rounded-full mr-2">Team Member ID: ${memberId}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Form Section -->
+                    <div class="bg-ui-gray p-8 rounded-lg shadow-xl">
+                        <h2 class="text-3xl font-bold text-white mb-6 border-b border-ui-gold pb-2">Contact ${member.name}</h2>
+                        <form onsubmit="submitContactForm(event, '${memberId}')" class="space-y-4">
+                            <div>
+                                <label for="name" class="block text-sm font-medium text-gray-300">Your Name</label>
+                                <input type="text" id="name" name="name" required class="mt-1 w-full p-3 rounded-md bg-ui-black text-white border border-gray-700 focus:ring-ui-gold focus:border-ui-gold">
+                            </div>
+                            <div>
+                                <label for="message" class="block text-sm font-medium text-gray-300">Your Message</label>
+                                <textarea id="message" name="message" rows="4" required class="mt-1 w-full p-3 rounded-md bg-ui-black text-white border border-gray-700 focus:ring-ui-gold focus:border-ui-gold"></textarea>
+                            </div>
+                            <button type="submit" class="w-full px-4 py-3 bg-ui-gold text-ui-black font-semibold rounded-lg shadow-md hover:bg-ui-dark-gold transition duration-200 transform hover:scale-[1.01]">
+                                Send Message
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            `;
+            setAppContent(html);
+        }
+
+        function renderHome() {
+            const memberCards = window.appState.members.map(member => `
+                <div class="bg-ui-gray p-6 rounded-xl shadow-lg border border-gray-700 hover:border-ui-gold transition duration-300 transform hover:scale-[1.01]">
+                    <img src="${member.image}" alt="${member.name}" class="w-24 h-24 rounded-full mx-auto mb-4 border-2 border-ui-gold" onerror="this.onerror=null; this.src='https://placehold.co/100x100/ffcd00/000000?text=${member.name.split(' ').map(n=>n[0]).join('')}'">
+                    <h3 class="text-xl font-bold text-ui-gold text-center">${member.name}</h3>
+                    <p class="text-sm text-gray-400 text-center">${member.role}</p>
+                    <a href="#" onclick="navigate('member', '${member.id}')" class="mt-4 block w-full text-center py-2 text-ui-black bg-ui-gold rounded-lg font-medium hover:bg-ui-dark-gold transition duration-200">View Profile</a>
+                </div>
+            `).join('');
+
+            const html = `
+                <header class="text-center mb-12">
+                    <h1 class="text-5xl font-extrabold text-white leading-tight mb-3">
+                        <span class="text-ui-gold">ECE:4880</span> Fall 2025 Design Portfolio
+                    </h1>
+                    <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                        A showcase of our project design, led by our four-member engineering group.
+                        Our focus is on delivering an **intuitive, efficient, and robust** system.
+                    </p>
+                    <div class="mt-6">
+                        <a href="https://its.uiowa.edu/services/myweb" target="_blank" class="text-sm text-gray-500 hover:text-ui-gold underline">
+                            Hosted on a Public Web Service
+                        </a>
+                    </div>
+                </header>
+
+                <section class="mb-12">
+                    <h2 class="text-3xl font-bold text-ui-gold mb-6 border-b border-ui-dark-gold pb-2">Our Team</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                        ${memberCards}
+                    </div>
+                </section>
+
+                <section class="bg-ui-gray p-8 rounded-lg shadow-xl text-center">
+                    <h2 class="text-3xl font-bold text-white mb-4">Secure Information Access</h2>
+                    <p class="text-gray-300 mb-6">Access private files, including contact form messages, with the project password.</p>
+                    <button onclick="showPasswordModal()" class="px-8 py-3 bg-ui-gold text-ui-black font-bold rounded-lg shadow-lg hover:bg-ui-dark-gold transition duration-200 transform hover:scale-105">
+                        View Protected Content
+                    </button>
+                    <p class="mt-4 text-xs text-gray-500">
+                        Authentication is required. Password: ${window.appState.PROTECTED_PASSWORD}
+                    </p>
+                </section>
+            `;
+            setAppContent(html);
+        }
+
+        function renderProtectedLogin() {
+            // Check session state first for smoother UX (happy medium)
+            if (sessionStorage.getItem('authenticated') === 'true') {
+                window.navigate('protected');
+                return;
+            }
+
+            const html = `
+                <div class="max-w-md mx-auto bg-ui-gray p-8 rounded-lg shadow-2xl text-center my-20">
+                    <h1 class="text-3xl font-bold text-ui-gold mb-4">Access Restricted</h1>
+                    <p class="text-gray-300 mb-6">This section is password protected.</p>
+                    <button onclick="showPasswordModal()" class="px-6 py-3 bg-ui-gold text-ui-black font-bold rounded-lg shadow-md hover:bg-ui-dark-gold transition duration-200">
+                        Enter Password
+                    </button>
+                    <p class="mt-6 text-sm text-gray-500">
+                        This ensures unauthorized parties cannot view team-internal or sensitive data (like contact messages).
+                    </p>
+                </div>
+            `;
+            setAppContent(html);
+        }
+
+        function renderProtectedContent() {
+            if (sessionStorage.getItem('authenticated') !== 'true') {
+                window.navigate('protected-login');
+                return;
+            }
+
+            const messages = window.appState.messages;
+
+            const messageListHtml = messages.length > 0 ? messages.map(msg => {
+                const date = msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleString() : 'Loading...';
+                return `
+                    <div class="bg-ui-black p-4 rounded-lg shadow-md border-l-4 border-ui-gold mb-4">
+                        <p class="text-sm text-gray-400 mb-1 flex justify-between">
+                            <span>To: <strong class="text-ui-gold">${msg.member}</strong></span>
+                            <span>Received: ${date}</span>
+                        </p>
+                        <p class="text-lg text-white font-medium mb-2">${msg.message}</p>
+                        <p class="text-xs text-gray-500">From: ${msg.name || 'Anonymous'}</p>
+                    </div>
+                `;
+            }).join('') : `
+                <div class="text-center py-10 bg-ui-black p-6 rounded-lg">
+                    <p class="text-gray-400 text-lg">No contact messages have been received yet.</p>
+                </div>
+            `;
+
+            const html = `
+                <h1 class="text-4xl font-extrabold text-ui-gold mb-8 border-b border-ui-dark-gold pb-3">Protected Content: Team Messages</h1>
+                <p class="text-gray-300 mb-6">
+                    This section contains the list of all received contact messages, acting as dynamic, protected content.
+                    <span class="text-sm text-gray-500 block mt-2">Current User ID: ${window.appState.userId} (Required for Firestore Access)</span>
+                </p>
+
+                <div class="space-y-6">
+                    <h2 class="text-2xl font-semibold text-white">Contact Form Submissions (${messages.length} Total)</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${messageListHtml}
+                    </div>
+                </div>
+            `;
+            setAppContent(html);
+        }
+
+        // Helper for showing custom modals
+        function showCustomModal(title, text, titleColorClass) {
+            const modal = document.getElementById('message-modal');
+            document.getElementById('message-modal-title').textContent = title;
+            document.getElementById('message-modal-title').className = `text-xl font-semibold mb-3 ${titleColorClass}`;
+            document.getElementById('message-modal-text').textContent = text;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        // --- Navigation Logic (Exposed Globally) ---
+        window.navigate = function(page, param = null) {
+            window.appState.currentPage = page;
+            const appDiv = document.getElementById('app');
+            appDiv.classList.add('opacity-0', 'transition-opacity', 'duration-300'); // Fade out
+
+            setTimeout(() => {
+                switch (page) {
+                    case 'home':
+                        renderHome();
+                        break;
+                    case 'member':
+                        renderMemberPage(param);
+                        break;
+                    case 'protected-login':
+                        renderProtectedLogin();
+                        break;
+                    case 'protected':
+                        // If session is authenticated, render content directly
+                        if (sessionStorage.getItem('authenticated') === 'true') {
+                            renderProtectedContent();
+                        } else {
+                            // Otherwise, force login modal/page
+                            window.showPasswordModal();
+                            renderProtectedLogin();
+                        }
+                        break;
+                    default:
+                        renderHome();
+                }
+                appDiv.classList.remove('opacity-0'); // Fade in
+            }, 300); // Wait for fade out
+        }
+
+        // --- Modal Logic (Exposed Globally) ---
+        window.showPasswordModal = function() {
+            const modal = document.getElementById('password-modal');
+            const content = document.getElementById('modal-content');
+            document.getElementById('password-error').classList.add('hidden');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            // Animate in
+            setTimeout(() => {
+                content.classList.remove('opacity-0', 'scale-95');
+                document.getElementById('password-input').focus();
+            }, 10);
+        }
+
+        window.hidePasswordModal = function() {
+            const modal = document.getElementById('password-modal');
+            const content = document.getElementById('modal-content');
+            // Animate out
+            content.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                document.getElementById('password-input').value = '';
+            }, 300);
+        }
+
+        window.handlePasswordSubmit = function() {
+            const input = document.getElementById('password-input').value;
+            const errorElement = document.getElementById('password-error');
+
+            if (input === window.appState.PROTECTED_PASSWORD) {
+                // Success: Set session flag and navigate
+                sessionStorage.setItem('authenticated', 'true');
+                window.hidePasswordModal();
+                window.navigate('protected');
+            } else {
+                // Failure: Show error
+                errorElement.classList.remove('hidden');
+                document.getElementById('password-input').value = '';
+                document.getElementById('password-input').focus();
+            }
+        }
+
+        // --- Firestore Data Writer (Contact Form Submission - Exposed Globally) ---
+        // This function needs to be exposed for inline HTML form submission
+        window.submitContactForm = async function(event, memberId) {
+            event.preventDefault();
+
+            const form = event.target;
+            const senderName = form.querySelector('[name="name"]').value;
+            const senderMessage = form.querySelector('[name="message"]').value;
+            const formButton = form.querySelector('button[type="submit"]');
+
+            if (!senderName || !senderMessage) return;
+
+            formButton.disabled = true;
+            formButton.textContent = 'Sending...';
+
+            try {
+                // Ensure authentication is complete
+                if (!window.appState.isAuthReady) {
+                    throw new Error("Authentication not ready. Cannot save message.");
+                }
+
+                const messagesCollectionRef = collection(window.appState.db, 'artifacts', appId, 'public', 'data', 'contact_messages');
+
+                await addDoc(messagesCollectionRef, {
+                    name: senderName,
+                    message: senderMessage,
+                    memberId: memberId,
+                    member: window.appState.members.find(m => m.id === memberId)?.name || 'Unknown',
+                    timestamp: serverTimestamp()
+                });
+
+                showCustomModal('Success', `Message successfully sent to ${memberId}!`, 'text-green-400');
+                form.reset(); // Clear form on success
+
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                showCustomModal('Error', 'Failed to send message. Check console for details.', 'text-red-500');
+            } finally {
+                formButton.disabled = false;
+                formButton.textContent = 'Send Message';
+            }
+        };
+        
+        // --- Firebase Initialization and Auth ---
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        window.appState.auth = getAuth(app);
+        window.appState.db = getFirestore(app);
+
+        // --- Firestore Data Listener (for Protected Content) ---
+        function startMessageListener() {
+            if (!window.appState.isAuthReady) return;
+
+            // Path for public data (Contact Messages)
+            const messagesCollectionRef = collection(window.appState.db, 'artifacts', appId, 'public', 'data', 'contact_messages');
+            const q = query(messagesCollectionRef);
+
+            // Listen for real-time updates
+            onSnapshot(q, (snapshot) => {
+                const messages = [];
+                snapshot.forEach((doc) => {
+                    messages.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Sort by timestamp descending
+                messages.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+
+                window.appState.messages = messages;
+
+                // Re-render protected content if it's the current page
+                if (window.appState.currentPage === 'protected') {
+                    renderProtectedContent();
+                }
+            }, (error) => {
+                console.error("Error listening to messages:", error);
+                console.error("To fix Firestore 'Missing or insufficient permissions' errors, please ensure your security rules allow read/write access for authenticated users (which includes anonymous users used by this app) to the path: /artifacts/{appId}/public/data/{document=**}");
+            });
+        }
+        
+        // --- Authentication Flow ---
+        
+        onAuthStateChanged(window.appState.auth, async (user) => {
+            if (user) {
+                window.appState.userId = user.uid;
+            } else {
+                // If onAuthStateChanged returns null, fall back to a random ID (though this should only happen if sign-in fails)
+                window.appState.userId = crypto.randomUUID(); 
+            }
+
+            window.appState.isAuthReady = true;
+
+            // Start listening to messages once authentication is ready and we have a userId
+            startMessageListener();
+
+            // Check session storage for protected access flag
+            if (sessionStorage.getItem('authenticated') === 'true' && window.appState.currentPage === 'protected') {
+                window.navigate('protected');
+            } else {
+                window.navigate(window.appState.currentPage); // Initial rendering of the current page
+            }
+        });
+        
+        (async () => {
+            if (initialAuthToken) {
+                try {
+                    await signInWithCustomToken(window.appState.auth, initialAuthToken);
+                    console.log("Signed in with custom token.");
+                } catch (error) {
+                    console.error("Error signing in with custom token:", error);
+                    await signInAnonymously(window.appState.auth);
+                    console.log("Signed in anonymously due to token error.");
+                }
+            } else {
+                await signInAnonymously(window.appState.auth);
+                console.log("Signed in anonymously (no initial auth token).");
+            }
+        })();
+
+        // Start the application after all functions and Firebase setup are complete
+        window.onload = () => {
+             // The navigation logic is now handled robustly inside the onAuthStateChanged listener.
+        };
+    </script>
+
+    <!-- Firebase Imports for HTML (These are redundant if using the module import block above, but harmless) -->
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
+
+</body>
+</html>
