@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Portfolio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #000000;
+            color: #FFCD00;
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: #FFCD00;
+            color: #000000;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        nav {
+            background-color: #333;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        nav a {
+            color: #FFCD00;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            margin: 0 0.5rem;
+            display: inline-block;
+            transition: background-color 0.3s;
+        }
+
+        nav a:hover {
+            background-color: #555;
+            border-radius: 4px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .team-section {
+            background-color: #1a1a1a;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .team-section h2 {
+            color: #FFCD00;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #FFCD00;
+            padding-bottom: 0.5rem;
+        }
+
+        .team-members {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .member-card {
+            background-color: #2a2a2a;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .member-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(255, 205, 0, 0.3);
+        }
+
+        .member-card img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #FFCD00;
+            margin-bottom: 1rem;
+        }
+
+        .member-card h3 {
+            color: #FFCD00;
+            margin-bottom: 0.5rem;
+        }
+
+        .member-card p {
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+
+        .member-card a {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background-color: #FFCD00;
+            color: #000;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .member-card a:hover {
+            background-color: #e6b800;
+        }
+
+        .protected-link {
+            background-color: #2a2a2a;
+            padding: 2rem;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .protected-link button {
+            background-color: #FFCD00;
+            color: #000;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .protected-link button:hover {
+            background-color: #e6b800;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-content {
+            background-color: #2a2a2a;
+            margin: 15% auto;
+            padding: 2rem;
+            border: 2px solid #FFCD00;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .modal-content h2 {
+            color: #FFCD00;
+            margin-bottom: 1rem;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #FFCD00;
+            background-color: #1a1a1a;
+            color: #FFCD00;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .modal-content button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #FFCD00;
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-content button:hover {
+            background-color: #e6b800;
+        }
+
+        .modal-content .cancel-btn {
+            background-color: #555;
+            color: #FFCD00;
+        }
+
+        .modal-content .cancel-btn:hover {
+            background-color: #666;
+        }
+
+        .error-message {
+            color: #ff4444;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        footer {
+            background-color: #FFCD00;
+            color: #000;
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 3rem;
+        }
+
+        .page-content {
+            display: none;
+        }
+
+        .page-content.active {
+            display: block;
+        }
+
+        .contact-form {
+            background-color: #2a2a2a;
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 600px;
+            margin: 2rem auto;
+        }
+
+        .contact-form h3 {
+            color: #FFCD00;
+            margin-bottom: 1.5rem;
+        }
+
+        .contact-form input,
+        .contact-form textarea {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #FFCD00;
+            background-color: #1a1a1a;
+            color: #FFCD00;
+            border-radius: 4px;
+        }
+
+        .contact-form textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .contact-form button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #FFCD00;
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .contact-form button:hover {
+            background-color: #e6b800;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin: 1rem 0;
+            padding: 0.5rem 1rem;
+            background-color: #FFCD00;
+            color: #000;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+
+        .back-btn:hover {
+            background-color: #e6b800;
+        }
+
+        .protected-content-list {
+            background-color: #2a2a2a;
+            padding: 2rem;
+            border-radius: 8px;
+        }
+
+        .protected-content-list h3 {
+            color: #FFCD00;
+            margin-bottom: 1rem;
+        }
+
+        .protected-content-list ul {
+            list-style: none;
+        }
+
+        .protected-content-list li {
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background-color: #1a1a1a;
+            border-radius: 4px;
+        }
+
+        .protected-content-list li a {
+            color: #FFCD00;
+            text-decoration: none;
+        }
+
+        .protected-content-list li a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- Home Page -->
+    <div id="homePage" class="page-content active">
+        <header>
+            <h1>Team Portfolio</h1>
+            <p>ECE:4880 Senior Design - Lab 3 Fall 2025</p>
+        </header>
+
+        <nav>
+            <a href="#" onclick="showPage('homePage')">Home</a>
+            <a href="#" onclick="showProtectedContent()">Protected Content</a>
+        </nav>
+
+        <div class="container">
+            <div class="team-section">
+                <h2>Meet Our Team</h2>
+                <div class="team-members">
+                    <div class="member-card">
+                        <img src="https://via.placeholder.com/150/FFCD00/000000?text=Member+1" alt="Team Member 1">
+                        <h3>Team Member 1</h3>
+                        <p>Computer Engineering Student</p>
+                        <p>Interests: AI, Machine Learning, Web Development</p>
+                        <a href="#" onclick="showMemberPage('member1')">View Profile</a>
+                    </div>
+                    <div class="member-card">
+                        <img src="https://via.placeholder.com/150/FFCD00/000000?text=Member+2" alt="Team Member 2">
+                        <h3>Team Member 2</h3>
+                        <p>Electrical Engineering Student</p>
+                        <p>Interests: Embedded Systems, IoT, Robotics</p>
+                        <a href="#" onclick="showMemberPage('member2')">View Profile</a>
+                    </div>
+                    <div class="member-card">
+                        <img src="https://via.placeholder.com/150/FFCD00/000000?text=Member+3" alt="Team Member 3">
+                        <h3>Team Member 3</h3>
+                        <p>Software Engineering Student</p>
+                        <p>Interests: Full-Stack Development, Cloud Computing</p>
+                        <a href="#" onclick="showMemberPage('member3')">View Profile</a>
+                    </div>
+                    <div class="member-card">
+                        <img src="https://via.placeholder.com/150/FFCD00/000000?text=Member+3" alt="Team Member 3">
+                        <h3>Team Member 4</h3>
+                        <p>Software Engineering Student</p>
+                        <p>Interests: Full-Stack Development, Cloud Computing</p>
+                        <a href="#" onclick="showMemberPage('member3')">View Profile</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="protected-link">
+                <h2>Protected Content</h2>
+                <p>Access team resources and contact messages</p>
+                <button onclick="showProtectedContent()">Access Protected Area</button>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; Group 11 Team Portfolio | Senior Design Lab 3</p>
+        </footer>
+    </div>
+
+    <!-- Member Pages -->
+    <div id="member1Page" class="page-content">
+        <header>
+            <h1>Team Member 1</h1>
+        </header>
+        <nav>
+            <a href="#" onclick="showPage('homePage')">Home</a>
+        </nav>
+        <div class="container">
+            <a href="#" onclick="showPage('homePage')" class="back-btn">← Back to Team</a>
+            <div class="team-section">
+                <h2>About Me</h2>
+                <p>I'm a Computer Engineering student passionate about AI and web development. I have experience with Python, JavaScript, and machine learning frameworks.</p>
+                
+                <h2>Projects & Achievements</h2>
+                <ul>
+                    <li>Developed a machine learning model for image classification</li>
+                    <li>Built multiple web applications using React and Node.js</li>
+                    <li>Dean's List for 3 consecutive semesters</li>
+                </ul>
+            </div>
+
+            <div class="contact-form">
+                <h3>Contact Me</h3>
+                <form onsubmit="submitContactForm(event, 'member1')">
+                    <input type="text" name="name" placeholder="Your Name" required>
+                    <input type="email" name="email" placeholder="Your Email" required>
+                    <textarea name="message" placeholder="Your Message" required></textarea>
+                    <button type="submit">Send Message</button>
+                </form>
+            </div>
+        </div>
+        <footer>
+            <p>&copy; Group 11 Team Portfolio | Senior Design Lab 3</p>
+        </footer>
+    </div>
+
+    <div id="member2Page" class="page-content">
+        <header>
+            <h1>Team Member 2</h1>
+        </header>
+        <nav>
+            <a href="#" onclick="showPage('homePage')">Home</a>
+        </nav>
+        <div class="container">
+            <a href="#" onclick="showPage('homePage')" class="back-btn">← Back to Team</a>
+            <div class="team-section">
+                <h2>About Me</h2>
+                <p>I'm an Electrical Engineering student with a focus on embedded systems and IoT devices. I enjoy working with microcontrollers and sensor networks.</p>
+                
+                <h2>Projects & Achievements</h2>
+                <ul>
+                    <li>Designed an IoT-based home automation system</li>
+                    <li>Built an autonomous robot for competition</li>
+                    <li>Published research on sensor optimization</li>
+                </ul>
+            </div>
+
+            <div class="contact-form">
+                <h3>Contact Me</h3>
+                <form onsubmit="submitContactForm(event, 'member2')">
+                    <input type="text" name="name" placeholder="Your Name" required>
+                    <input type="email" name="email" placeholder="Your Email" required>
+                    <textarea name="message" placeholder="Your Message" required></textarea>
+                    <button type="submit">Send Message</button>
+                </form>
+            </div>
+        </div>
+        <footer>
+            <p>&copy; Group 11 Team Portfolio | Senior Design Lab 3</p>
+        </footer>
+    </div>
+
+    <div id="member3Page" class="page-content">
+        <header>
+            <h1>Team Member 3</h1>
+        </header>
+        <nav>
+            <a href="#" onclick="showPage('homePage')">Home</a>
+        </nav>
+        <div class="container">
+            <a href="#" onclick="showPage('homePage')" class="back-btn">← Back to Team</a>
+            <div class="team-section">
+                <h2>About Me</h2>
+                <p>I'm a Software Engineering student specializing in full-stack development and cloud technologies. I love building scalable web applications.</p>
+                
+                <h2>Projects & Achievements</h2>
+                <ul>
+                    <li>Developed a cloud-based inventory management system</li>
+                    <li>Created a social media platform with 1000+ users</li>
+                    <li>Intern at a Fortune 500 tech company</li>
+                </ul>
+            </div>
+
+            <div class="contact-form">
+                <h3>Contact Me</h3>
+                <form onsubmit="submitContactForm(event, 'member3')">
+                    <input type="text" name="name" placeholder="Your Name" required>
+                    <input type="email" name="email" placeholder="Your Email" required>
+                    <textarea name="message" placeholder="Your Message" required></textarea>
+                    <button type="submit">Send Message</button>
+                </form>
+            </div>
+        </div>
+        <footer>
+            <p>&copy; Group 11 Team Portfolio | Senior Design Lab 3</p>
+        </footer>
+    </div>
+
+    <div id="member4Page" class="page-content">
+        <header>
+            <h1>Team Member 4</h1>
+        </header>
+        <nav>
+            <a href="#" onclick="showPage('homePage')">Home</a>
+        </nav>
+        <div class="container">
+            <a href="#" onclick="showPage('homePage')" class="back-btn">← Back to Team</a>
+            <div class="team-section">
+                <h2>About Me</h2>
+                <p>I'm a Software Engineering student specializing in full-stack development and cloud technologies. I love building scalable web applications.</p>
+                
+                <h2>Projects & Achievements</h2>
+                <ul>
+                    <li>Developed a cloud-based inventory management system</li>
+                    <li>Created a social media platform with 1000+ users</li>
+                    <li>Intern at a Fortune 500 tech company</li>
+                </ul>
+            </div>
+
+            <div class="contact-form">
+                <h3>Contact Me</h3>
+                <form onsubmit="submitContactForm(event, 'member4')">
+                    <input type="text" name="name" placeholder="Your Name" required>
+                    <input type="email" name="email" placeholder="Your Email" required>
+                    <textarea name="message" placeholder="Your Message" required></textarea>
+                    <button type="submit">Send Message</button>
+                </form>
+            </div>
+        </div>
+        <footer>
+            <p>&copy; Group 11 Team Portfolio | Senior Design Lab 3</p>
+        </footer>
+    </div>
+
+    <!-- Protected Content Page -->
+    <div id="protectedPage" class="page-content">
+        <header>
+            <h1>Protected Content</h1>
+        </header>
+        <nav>
+            <a href="#" onclick="showPage('homePage')">Home</a>
+            <a href="#" onclick="logout()">Logout</a>
+        </nav>
+        <div class="container">
+            <div class="protected-content-list">
+                <h3>Available Content</h3>
+                <ul id="messageList">
+                    <li>No messages yet. Messages submitted through contact forms will appear here.</li>
+                </ul>
+            </div>
+        </div>
+        <footer>
+            <p>&copy; Group 11 Team Portfolio | Senior Design Lab 3</p>
+        </footer>
+    </div>
+
+    <!-- Password Modal -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <h2>Enter Password</h2>
+            <input type="password" id="passwordInput" placeholder="Password">
+            <div class="error-message" id="errorMessage">Incorrect password. Please try again.</div>
+            <button onclick="verifyPassword()">Submit</button>
+            <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // Password hash (SHA-256 of "Fall2025Lab3")
+        const PASSWORD_HASH = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+        let isAuthenticated = false;
+        let authTimestamp = null;
+        const AUTH_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+        let messages = [];
+
+        // Simple hash function for password verification
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page-content').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        function showMemberPage(memberId) {
+            showPage(memberId + 'Page');
+        }
+
+        function showProtectedContent() {
+            // Check if already authenticated and not timed out
+            if (isAuthenticated && authTimestamp && (Date.now() - authTimestamp < AUTH_TIMEOUT)) {
+                showPage('protectedPage');
+                updateMessageList();
+                return;
+            }
+            
+            // Show password modal
+            document.getElementById('passwordModal').style.display = 'block';
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('passwordInput').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('passwordModal').style.display = 'none';
+        }
+
+        async function verifyPassword() {
+            const password = document.getElementById('passwordInput').value;
+            
+            // For demo purposes, accept the actual password
+            // In production, you'd hash and compare
+            if (password === 'Fall2025Lab3') {
+                isAuthenticated = true;
+                authTimestamp = Date.now();
+                closeModal();
+                showPage('protectedPage');
+                updateMessageList();
+            } else {
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordInput').focus();
+            }
+        }
+
+        function logout() {
+            isAuthenticated = false;
+            authTimestamp = null;
+            showPage('homePage');
+        }
+
+        function submitContactForm(event, memberId) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const formData = new FormData(form);
+            
+            const message = {
+                id: Date.now(),
+                member: memberId,
+                name: formData.get('name'),
+                email: formData.get('email'),
+                message: formData.get('message'),
+                timestamp: new Date().toLocaleString()
+            };
+            
+            messages.push(message);
+            
+            alert('Message sent successfully! You can view it in the protected content area.');
+            form.reset();
+        }
+
+        function updateMessageList() {
+            const messageList = document.getElementById('messageList');
+            
+            if (messages.length === 0) {
+                messageList.innerHTML = '<li>No messages yet. Messages submitted through contact forms will appear here.</li>';
+                return;
+            }
+            
+            messageList.innerHTML = messages.map(msg => `
+                <li>
+                    <strong>From:</strong> ${msg.name} (${msg.email})<br>
+                    <strong>To:</strong> ${msg.member}<br>
+                    <strong>Time:</strong> ${msg.timestamp}<br>
+                    <strong>Message:</strong> ${msg.message}
+                </li>
+            `).join('');
+        }
+
+        // Allow Enter key to submit password
+        document.getElementById('passwordInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                verifyPassword();
+            }
+        });
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('passwordModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
