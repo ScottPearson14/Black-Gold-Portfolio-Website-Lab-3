@@ -1,0 +1,89 @@
+classDiagram
+    class WebPage {
+        -PASSWORD_HASH: string
+        -isAuthenticated: boolean
+        -authTimestamp: number
+        -AUTH_TIMEOUT: number
+        +showPage(pageId)
+        +showMemberPage(memberId)
+        +showProtectedContent()
+        +closeModal()
+        +verifyPassword()
+        +logout()
+    }
+    
+    class MessageManager {
+        +getMessages() Message[]
+        +saveMessages(messages)
+        +handleContactSubmit(event, memberName)
+        +updateMessageList()
+        +downloadMessage(id)
+        +downloadAllMessages()
+        +exportMessageFiles()
+        +deleteMessage(id)
+    }
+    
+    class AuthenticationService {
+        -PASSWORD_HASH: string
+        +hashPassword(password) Promise~string~
+        +verifyPassword() Promise~boolean~
+        +isAuthenticated() boolean
+        +logout()
+    }
+    
+    class Message {
+        +id: number
+        +member: string
+        +name: string
+        +email: string
+        +message: string
+        +timestamp: string
+    }
+    
+    class HTMLGenerator {
+        +generateMessageHTML(msg) string
+    }
+    
+    class PasswordScriptPython {
+        -HTML_FILE: string
+        +sha256_hash(password) string
+        +update_html_hash(file_path, new_hash)
+    }
+    
+    class TeamMember {
+        +name: string
+        +role: string
+        +image: string
+        +projects: Project[]
+    }
+    
+    class Project {
+        +title: string
+        +description: string
+        +image: string
+    }
+    
+    class ContactForm {
+        +name: string
+        +email: string
+        +message: string
+        +submit()
+    }
+    
+    class LocalStorage {
+        <<interface>>
+        +getItem(key) string
+        +setItem(key, value)
+    }
+
+    WebPage --> MessageManager: uses
+    WebPage --> AuthenticationService: uses
+    WebPage --> TeamMember: displays
+    MessageManager --> Message: manages
+    MessageManager --> HTMLGenerator: uses
+    MessageManager --> LocalStorage: persists to
+    ContactForm --> MessageManager: submits to
+    TeamMember --> Project: contains
+    TeamMember --> ContactForm: has
+    PasswordScriptPython --> WebPage: updates hash in
+    AuthenticationService --> LocalStorage: stores auth state
